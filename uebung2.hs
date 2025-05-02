@@ -28,7 +28,7 @@ Zieltyp auffassen.
 Betrachten wir noch einmal das Beispiel aus der Vorlesung (Doberkat-Folie 14):
 -}
 
-b :: Num a => a -> a -> a
+b :: Num a => (a -> (a -> a))
 b x y = x + y
 
 c :: Num a => (a, a) -> a
@@ -38,11 +38,14 @@ c (x, y) = x + y
 In dieser Aufgabe wollen wir uns einmal klar machen, dass die Funktionen b und c
 isomorph sind. Hierzu implementieren Sie bitte die zwei Funktionen
 
-cur :: ((a, b) -> c) -> a -> b -> c
+cur :: ((a, b) -> c) -> (a -> (b -> c))
+=> Eine Funktion, die eine Funktion c :: (a, b) -> c als Argument bekommt, die die gegebene Funktion umwandelt, sodass daraus zwei rekursive Funktionen werden
+=> Die umgewandelte Funktion nimmt ein a und gibt eine Funktion zurück, die ein b nimmt, die ein c zurückgibt
 
 und
 
-uncur :: (a -> b -> c) -> (a, b) -> c.
+uncur :: (a -> (b -> c)) -> ((a, b) -> c).
+=> Eine Funktion, die ein a nimmt und eine Funktion zurückgibt, die ein b nimmt und ein c zurückgibt, wird umgewandelt in eine Funktion, die ein Tupel (a, b) nimmt und ein c zurückgibt
 
 Vergewissern Sie sich durch sinnvolle Tests, dass gilt:
 
@@ -56,19 +59,21 @@ uncur (cur c) = c
 
 Können Sie Vorteile der "curryfizierten" Funktion b gegenüber der isomorphen Definition
 der Funktion c nennen?
+=> Ja, die currfizierte Version ermöglicht es, einzeln Argumente zu übergeben und auf andere zu warten, während die isomorphe durch das Tupel beide Werte kennen muss.
 -}
 
---cur :: ((a, b) -> c) -> a -> b -> c
+cur :: ((a, b) -> c) -> a -> b -> c
+cur f x y = f (x, y)
 
-
---uncur :: (a -> b -> c) -> (a, b) -> c
-
+uncur :: (a -> b -> c) -> (a, b) -> c
+uncur f (x, y) = f x y  
 
 {-
 b)
 Implementieren Sie eine Funktion
 foo :: (a -> b, a -> a) -> a -> b,
-die ein Paar von Funktionen, sowie einen "Startwert" als Argumente nimmt und
+die ein Paar von Funktionen, 
+sowie einen "Startwert" als Argumente nimmt und
 die Funktion aus der zweiten Projektion zweimal auf den Startwert anwendet und
 auf das Ergebnis die Funktion aus der ersten Projektion.
 
@@ -85,11 +90,16 @@ applyNtimes :: (a -> a) -> Int -> a -> a
 von Blatt 1 kann hier hilfreich sein.
 -}
 
---foo :: (a -> b, a -> a) -> a -> b
+applyNtimes :: (a -> a) -> Int -> a -> a
+applyNtimes f 0 x = x
+applyNtimes f n x = applyNtimes f (n - 1) (f x)
+ 
 
+foo :: (a -> b, a -> a) -> (a -> b)
+foo (f, g) x = f (g (g x))
 
---bar :: Int -> (a -> b, a -> a) -> a -> b
-
+bar :: Int -> ((a -> b, a -> a) -> (a -> b))
+bar n (f, g) x = f (applyNtimes g n x) 
 
 {-
 Aufgabe 2.2 - Typklassen
