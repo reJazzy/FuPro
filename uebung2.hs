@@ -107,8 +107,8 @@ Aufgabe 2.2 - Typklassen
 
 {-
 Implementieren Sie eine Funktion h, die den Typ
-Read a => (b -> c) -> (a -> b) -> String -> c
-hat.
+Read a => (b -> c) -> ((a -> b) -> (String -> c)) hat.
+
 Die Typklasse Read wurde in der Vorlesung eingeführt (Doberkat-Folien 45 & 46).
 
 Tipp: Für eine geeignete Implementierung könnten Beispielaufrufe zum Testen
