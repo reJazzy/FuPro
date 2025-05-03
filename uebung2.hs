@@ -117,7 +117,8 @@ wie folgt aussehen:
 • h (+1) (+1) "2" ~> 4
 -}
 
---h :: Read a => (b -> c) -> (a -> b) -> String -> c
+h :: Read a => ((b -> c) -> ((a -> b) -> (String -> c)))
+h f g s = f(g(read s))
 
 
 {-
@@ -140,8 +141,8 @@ Sollte ein solcher Beispielaufruf nicht terminieren (innerhalb weniger Sekunden.
 dann sollten Sie Ihre Lösung überdenken!
 -}
 
---pyTriples :: [(Int, Int, Int)]
---pyTriples = 
+pyTriples :: [(Int, Int, Int)]
+pyTriples = [(a, b, c) | c <- [5..], b <- [4..c-1], a <- [3..b-1], a^2 + b^2 == c^2]
 
 
 {-
@@ -158,8 +159,9 @@ zur Definition nutzen.
 Beispielsweise sollte der Ausdruck collapse (+) 0 [1,2,3,4] zu dem Wert 10 reduzieren.
 -}
 
---collapse :: (a -> a -> a) -> a -> [a] -> a
-
+collapse :: (a -> a -> a) -> (a -> ([a] -> a))
+collapse op e [] = e
+collapse op e (x : xs) = op x (collapse op e xs)
 
 
 {-
