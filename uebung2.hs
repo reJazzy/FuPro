@@ -173,7 +173,7 @@ Betrachten Sie erneut die Funktionen foo und bar aus Aufgabe 2.1.
 Anstatt einen einzelnen Wert durch mehrmalige Anwendung der Projektionen zu
 berechnen, sollen Sie dieses Mal alle Werte berechnen.
 Implementieren Sie hierzu eine Funktion
-buildList :: (a -> b, a -> a) -> a -> [b]
+buildList :: (a -> b, a -> a) -> (a -> [b])
 die ähnlich funktioniert wie bar, aber eine unendliche Liste zurückgibt,
 in der das Element mit Index i der i-fachen Applikation der zweiten Projektion vor der
 Applikation der ersten Projektion entspricht.
@@ -188,4 +188,13 @@ take 10 $ buildList (id, (+2)) 0
 [0,2,4,6,8,10,12,14,16,18]
 -}
 
---buildList :: (a -> b, a -> a) -> a -> [b]
+buildList :: (a -> b, a -> a) -> (a -> [b])
+buildList (f, g) x =  f x : buildList (f, g) (g x)
+-- [f x, f (g x), f(g(g x)), ...]
+
+{-
+Anderer Lösungsweg:
+
+buildList (f, g) x = [ bar n (f, g) x | n <- [0..] ]
+
+-}
