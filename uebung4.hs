@@ -91,7 +91,10 @@ bagOrd xs ys
         fkt ((a, b) : acc) biggest 
             | b > biggest = fkt acc b
             | b < biggest = fkt acc biggest
-            | otherwise = fkt acc biggest 
+            | otherwise = fkt acc biggest
+
+bagOrd' :: Ord a => [a] -> [a] -> Ordering
+bagOrd' xs ys = compare (maximum (map snd (bag xs))) (maximum (map snd (bag ys)))
 
 {-
 d)
@@ -123,8 +126,6 @@ lexProd xs ys
         lengthCompare = compare (length xs) (length ys)
         bagCompare = bagOrd xs ys
 
-
-
 {-
 Aufgabe 4.2 - Matrizen
 -}
@@ -150,9 +151,8 @@ der Einfachheit halber voraussetzen, dass die beiden Argumentlisten
 dieselbe Länge haben.
 -}
 
---skalarProdukt :: [Integer] -> [Integer] -> Integer
-
-
+skalarProdukt :: [Integer] -> [Integer] -> Integer
+skalarProdukt xs ys = sum (zipWith (*) xs ys)
 
 {-
 b)
@@ -172,7 +172,9 @@ transpose [[1,2,3], [4,5,6], [7,8,9]] ~> [[1,4,7],[2,5,8],[3,6,9]]
 transpose [[1,4,7],[2,5,8],[3,6,9]] ~> [[1,2,3],[4,5,6],[7,8,9]]
 -}
 
---transpose :: Matrix -> Matrix
+transpose :: Matrix -> Matrix
+transpose [] = []
+transpose matrix = map head matrix : transpose (map tail matrix)
 
 
 
