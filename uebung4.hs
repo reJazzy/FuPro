@@ -173,7 +173,7 @@ transpose [[1,4,7],[2,5,8],[3,6,9]] ~> [[1,2,3],[4,5,6],[7,8,9]]
 -}
 
 transpose :: Matrix -> Matrix
-transpose [] = []
+transpose ([] : _) = []
 transpose matrix = map head matrix : transpose (map tail matrix)
 
 
@@ -187,8 +187,12 @@ Sie dürfen der Einfachheit halber voraussetzen,
 dass die Dimensionen der Argumentmatrizen korrekt sind.
 -}
 
---matrixMult :: Matrix -> Matrix -> Matrix
-
+matrixMult :: Matrix -> Matrix -> Matrix
+matrixMult _ [] = []
+matrixMult gugu gaga = fkt gugu (head gaga) : matrixMult gugu (tail gaga)
+    where
+        fkt ([] : _) _ = [] 
+        fkt guguZeilen gagaSpalte = skalarProdukt (map head guguZeilen) gagaSpalte : fkt (map tail guguZeilen) gagaSpalte
 
 
 {-
