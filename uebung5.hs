@@ -71,8 +71,9 @@ foldNat f g (S $ S Z) ~> g $ g f
 
 -}
 
---foldNat :: b -> (b -> b) -> Nat -> b
-
+foldNat :: b -> (b -> b) -> Nat -> b
+foldNat f g Z = f
+foldNat f g (S x) = g (foldNat f g x)
 
 {-
 b)
@@ -82,8 +83,8 @@ die zwei natürliche Zahlen addiert.
 Nutzen Sie hierfür die Faltung foldNat auf sinnvolle und nicht triviale Weise.
 -}
 
---add :: Nat -> Nat -> Nat
-
+add :: Nat -> Nat -> Nat
+add x y = foldNat x S y  
 
 {-
 c)
@@ -94,7 +95,13 @@ die eine natürliche Zahl in die Binärzahldarstellung aus Übung 3
 Nutzen Sie hierfür die Faltung foldNat auf sinnvolle und nicht triviale Weise.
 -}
 
---nat2binär :: Nat -> [Bool]
+nat2binär :: Nat -> [Bool]
+nat2binär nat = foldNat [False] incrBin nat
+  where 
+    incrBin :: [Bool] -> [Bool]
+    incrBin [] = [True]  
+    incrBin (False:xs) = True : xs
+    incrBin (True:xs)  = False : incrBin xs
 
 
 
