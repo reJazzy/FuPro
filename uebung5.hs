@@ -224,7 +224,7 @@ preFold f g (BinKnoten x (BinBlatt l) (BinBlatt r)) ~> g x (f l) (f r)
 
 preFold :: (a -> b) -> (a -> b -> b -> b) -> BinBaum a -> b
 preFold f g (BinBlatt a) = f a
-preFold f g (BinKnoten a right left) = g a (preFold f g right) (preFold f g left)
+preFold f g (BinKnoten a left right) = g a (preFold f g left) (preFold f g right)
 
 
 {-
@@ -240,7 +240,13 @@ preorder beispielBinBaum ~>
 [4,2,1,3,6,5,7,8,9]
 -}
 
--- preorder :: BinBaum a -> [a]
+preorder :: BinBaum a -> [a]
+preorder baum = preFold f g baum 
+  where
+    f :: a -> [a]
+    f a = [a]
+    g :: a -> [a] -> [a] -> [a]
+    g a ls rs = a : (ls ++ rs)
 
 {-
 d)
@@ -254,10 +260,14 @@ knotenSumme beispielBinBaum ~>
 45
 -}
 
---knotenSumme :: Num a => BinBaum a -> a
-
-
-
+knotenSumme :: Num a => BinBaum a -> a
+knotenSumme baum = preFold f g baum 
+  where
+    f :: a -> a
+    f a = a
+    g :: Num a => a -> a -> a -> a
+    g a lsum rsum = a + lsum + rsum
+    
 
 {-
 Aufgabe 5.* - Destruktor

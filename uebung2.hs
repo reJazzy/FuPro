@@ -196,5 +196,4 @@ buildList (f, g) x =  f x : buildList (f, g) (g x)
 Anderer Lösungsweg:
 
 buildList (f, g) x = [ bar n (f, g) x | n <- [0..] ]
-
 -}
