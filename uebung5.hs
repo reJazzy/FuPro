@@ -117,10 +117,12 @@ die den Vorgägner einer natürlichen Zahl berechnet, sofern dieser existiert.
 Wenn kein Vorgänger existiert soll Nothing zurückgegeben werden.
 
 Anmerkung: predNat darf hier gerne mittels Pattern Matching definiert werden.
-           Außer Sie wollen die *-Aufgabe vorziehen.
+Außer Sie wollen die *-Aufgabe vorziehen.
 -}
 
---predNat :: Nat -> Maybe Nat
+predNat :: Nat -> Maybe Nat
+predNat Z = Nothing
+predNat (S x) = Just x
 
 
 
@@ -137,8 +139,12 @@ Guards oder ähnliches sind nicht notwendig, der "Fehlerfall" kann durch
 foldNat korrekt gehandhabt werden.
 -}
 
---minus :: Nat -> Nat -> Maybe Nat
-
+minor :: Nat -> Nat -> Maybe Nat
+minor x y = foldNat (Just x) minus y
+  where 
+    minus :: Maybe Nat -> Maybe Nat
+    minus Nothing = Nothing
+    minus (Just y) = predNat y
 
 {-
 c)
@@ -155,7 +161,11 @@ Sollte der Index negativ sein, so soll der String
 "Fehler: Negativer Index" im Either zurückgegeben werden.
 -}
 
---elemAtIndex :: Int -> [a] -> Either String a
+elemAtIndex :: Int -> [a] -> Either String a
+elemAtIndex x a
+  | x < 0 = Left "Törken"
+  | x >= length a = Left "Zugezogene"
+  | otherwise = Right (a !! x)
 
 
 {-
@@ -193,8 +203,9 @@ Beispielaufruf:
 convert beispielBinBaum ~> beispielBaum (siehe Definitionen oben)
 -}
 
---convert :: BinBaum a -> Baum a
-
+convert :: BinBaum a -> Baum a
+convert (BinBlatt a) = Knoten a []
+convert (BinKnoten a left right) = Knoten a [convert left, convert right]
 
 {-
 b)
@@ -211,8 +222,9 @@ preFold f g (BinKnoten x (BinBlatt l) (BinBlatt r)) ~> g x (f l) (f r)
 ...
 -}
 
---preFold :: (a -> b) -> (a -> b -> b -> b) -> BinBaum a -> b
-
+preFold :: (a -> b) -> (a -> b -> b -> b) -> BinBaum a -> b
+preFold f g (BinBlatt a) = f a
+preFold f g (BinKnoten a right left) = g a (preFold f g right) (preFold f g left)
 
 
 {-
@@ -228,8 +240,7 @@ preorder beispielBinBaum ~>
 [4,2,1,3,6,5,7,8,9]
 -}
 
---preorder :: BinBaum a -> [a]
-
+-- preorder :: BinBaum a -> [a]
 
 {-
 d)
