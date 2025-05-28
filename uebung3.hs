@@ -231,3 +231,6 @@ applyNtimes f 0 x = x
 applyNtimes f n x = f (applyNtimes f (n-1) x)
 
 --fib2HochN :: Integer -> Integer
+
+zipW' :: (a -> b -> c) -> [a] -> [b] -> [c]
+zipW' f xs ys = ? (foldl (_ :: ?) (_ :: ?) :: ?) 
