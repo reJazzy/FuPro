@@ -32,11 +32,17 @@ Do- und Bind-Notation.
 Nennen Sie die Funktionen mapLK, mapDo und mapBind.
 -}
 
---mapLK :: (a -> b) -> [a] -> [b]
+mapLK :: (a -> b) -> [a] -> [b]
+mapLK f as = [ f a | a <- as]
 
---mapDo :: (a -> b) -> [a] -> [b]
+mapDo :: (a -> b) -> [a] -> [b]
+mapDo f as = do 
+        a <- as
+        [f a]
 
---mapBind :: (a -> b) -> [a] -> [b]
+mapBind :: (a -> b) -> [a] -> [b]
+mapBind f as = 
+    as >>= \a -> [f a]
 
 {-
 b)
@@ -49,9 +55,21 @@ Nennen Sie die Listen pyTriplesDo und pyTriplesBind.
 pyTriples :: [(Int, Int, Int)]
 pyTriples = [(a,b,c) |c <- [0..], b <- [0.. c], a <- [0.. b], (a < b) && (b < c), (a^2 + b^2) == c^2]
 
---pyTriplesDo :: [(Int, Int, Int)]
+pyTriplesDo :: [(Int, Int, Int)]
+pyTriplesDo = do
+    c <- [0..]
+    b <- [0..c]
+    a <- [0..b]
+    guard ((a < b) && (b < c))
+    guard ((a^2 + b^2) == c^2)
+    [(a, b, c)]
 
---pyTriplesBind :: [(Int, Int, Int)]
+pyTriplesBind :: [(Int, Int, Int)]
+pyTriplesBind = 
+    [0..] >>= \c ->
+    [0..c] >>= \b ->
+    [0..b] >>= \a ->
+    if ((a < b) && (b < c)) && ((a^2 + b^2) == c^2) then [(a, b, c)] else []
 
 
 {-
