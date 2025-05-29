@@ -82,13 +82,32 @@ Gegeben sei der Datentyp Baum für nicht leere binäre Bäume, ohne innere Knote
 
 data Baum a = Blatt a | Knoten (Baum a) (Baum a) deriving (Show, Eq)
 
+beispielBaum :: Baum Int
+beispielBaum = Knoten (Knoten (Blatt 7) (Blatt 4)) (Knoten (Blatt 1) (Knoten (Blatt 5) (Blatt 1)))
+
+
 {-
 a)
 Machen Sie Baum zu einer Instanz der Typklassen Functor, Applicative und Monad.
 -}
 
+instance Functor Baum where
+    fmap :: (a -> b) -> Baum a -> Baum b
+    fmap f (Knoten left right) = Knoten (fmap f left) (fmap f right)
+    fmap f (Blatt a) = Blatt (f a)
 
+instance Applicative Baum where
+    pure :: a -> Baum a
+    pure a = Blatt a
+    (<*>) :: Baum (a -> b) -> Baum a -> Baum b
+    (<*>) (Blatt f) a = fmap f a
+    (<*>) (Knoten left right) a = Knoten ((<*>) left a) ((<*>) right a)
 
+instance Monad Baum where
+    (>>=) :: Baum a -> (a -> Baum b) -> Baum b
+    (>>=) (Blatt a) f = f a
+    (>>=) (Knoten left right) f = Knoten ((>>=) left f) ((>>=) right f)
+     
 {-
 b)
 Implementieren Sie die Faltung
