@@ -53,6 +53,7 @@ pyTriples = [(a,b,c) |c <- [0..], b <- [0.. c], a <- [0.. b], (a < b) && (b < c)
 
 --pyTriplesBind :: [(Int, Int, Int)]
 
+-- >>= \_ -> == >>
 
 {-
 Aufgabe 6.2 - Monadeninstanzen
@@ -82,7 +83,9 @@ Datentyp zu implementieren, dann ist immer das Schema von Übungsblatt 5
 gemeint, sofern explizit nichts anderes in der Aufgabenstellung steht.
 -}
 
---foldBaum :: (a -> b) -> (b -> b -> b) -> Baum a -> b
+foldBaum :: (a -> b) -> (b -> b -> b) -> Baum a -> b
+foldBaum f g (Blatt a ) = f abbilden
+foldBaum f g (Knoten left right) = g (foldBaum f g left) (foldBaum f g right)
 
 
 {-
