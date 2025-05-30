@@ -121,7 +121,7 @@ gemeint, sofern explizit nichts anderes in der Aufgabenstellung steht.
 -}
 
 foldBaum :: (a -> b) -> (b -> b -> b) -> Baum a -> b
-foldBaum f g (Blatt a ) = f abbilden
+foldBaum f g (Blatt a) = f a
 foldBaum f g (Knoten left right) = g (foldBaum f g left) (foldBaum f g right)
 
 
@@ -144,8 +144,12 @@ foo [] ~> Just []
 Nutzen Sie zur Implementierung die do-Notation auf sinnvolle Weise.
 -}
 
---foo :: [Maybe a] -> Maybe [a]
-
+foo :: [Maybe a] -> Maybe [a]
+foo [] = Just []
+foo (x : xs) = do
+    y <- x
+    ys <- foo xs
+    return (y:ys)
 
 {-
 Aufgabe 6.* - Kartesisches Produkt
