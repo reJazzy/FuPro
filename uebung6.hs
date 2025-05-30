@@ -71,6 +71,7 @@ pyTriplesBind =
     [0..b] >>= \a ->
     if ((a < b) && (b < c)) && ((a^2 + b^2) == c^2) then [(a, b, c)] else []
 
+-- >>= \_ -> == >>
 
 {-
 Aufgabe 6.2 - Monadeninstanzen
@@ -119,7 +120,9 @@ Datentyp zu implementieren, dann ist immer das Schema von Übungsblatt 5
 gemeint, sofern explizit nichts anderes in der Aufgabenstellung steht.
 -}
 
---foldBaum :: (a -> b) -> (b -> b -> b) -> Baum a -> b
+foldBaum :: (a -> b) -> (b -> b -> b) -> Baum a -> b
+foldBaum f g (Blatt a ) = f abbilden
+foldBaum f g (Knoten left right) = g (foldBaum f g left) (foldBaum f g right)
 
 
 {-
