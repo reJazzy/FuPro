@@ -6,7 +6,7 @@ in der Übung, im Midterm-Test und der Klausur vorausgesetzt werden,
 sofern die konkrete Aufgabenstellung dies nicht ausschließt.
 -}
 import Control.Monad ( guard )
-import Text.ParserCombinators.ReadP (look)
+import Text.ParserCombinators.ReadP (look, get)
 
 {-
 Übung zur Vorlesung
@@ -263,8 +263,7 @@ transactions bank1
 ]
 -}
 
---transactions bank = transferR 25 2 $ Env 3 $ transferR 25 1 $ Env 3 $ transferR 50 1 $ Env 2 bank
-
+transactions bank = transferR 25 2 $ Env 3 $ transferR 25 1 $ Env 3 $ transferR 50 1 $ Env 2 bank
 
 
 {-
@@ -289,8 +288,13 @@ aus FuPro_2025_VL7.pdf zu implementieren.
 (Für logging darf der Tupelkonstruktor (,) benutzt werden.)
 -}
 
---transferLog :: Int -> ID -> ID -> Bank -> (,) String Bank
+logging :: String -> (String, ())
+logging s = (s, ())
 
+transferLog :: Int -> ID -> ID -> Bank -> (,) String Bank
+transferLog val id1 id2 bank = do
+  logging ("Der Betrag " ++ show val ++ " wurde von Konto " ++ show id1 ++ " auf Konto " ++ show id2 ++ " uebertragen.\n")
+  pure (transfer val id1 id2 bank)
 
 
 {-
@@ -314,15 +318,11 @@ snd $ transactionsLog bank1
 ]
 -}
 
-{-
 transactionsLog :: Bank -> (,) String Bank
 transactionsLog bank = do
   bank2 <- transferLog 50 1 2 bank
   bank3 <- transferLog 25 1 3 bank2
   transferLog 25 2 3 bank3
--}
-
-
 
 {-
 Da die Zustandsmonade, im Gegensatz zur Leser- und Schreibermonade, nicht
@@ -367,23 +367,32 @@ Alle anderen Funktionen sollen mittels Komposition
 von putAccountS und getAccountS definiert werden.
 
 Nutzen Sie zur Implementierung der komponierten Funktionen die do-Notation.
+
+-- updRel bank id acc
 -}
 
---putAccountS :: ID -> Account -> State Bank ()
+putAccountS :: ID -> Account -> State Bank ()
+putAccountS id acc = State(\s -> ((), updRel s id acc))
 
+getAccountS :: ID -> State Bank (Maybe Account)
+getAccountS id = State(\s -> (lookup id s, s))
 
---getAccountS :: ID -> State Bank (Maybe Account)
+creditS :: Int -> ID -> State Bank ()
+creditS val id = do
+  acc <- getAccountS id
+  case acc of
+    Just acc -> putAccountS id acc{balance = balance acc + val}
+    Nothing -> pure ()
 
+debitS :: Int -> ID -> State Bank ()
+debitS val id = creditS (-val) id
 
---creditS :: Int -> ID -> State Bank ()
+-- transfer amount id1 id2 bank = let b = credit amount id2 bank in debit amount id1 b
 
-
---debitS :: Int -> ID -> State Bank ()
-
-
---transferS :: Int -> ID -> ID -> State Bank ()
-
-
+transferS :: Int -> ID -> ID -> State Bank ()
+transferS val id1 id2 = do
+  creditS val id2
+  debitS val id1
 
 {-
 Folgender Beispielaufruf kann zum Verständnis der Aufgabe und Überprüfen ihrer
@@ -392,15 +401,11 @@ Lösungen hilfreich sein:
  fmap (fmap balance)$ snd $ runS transactionsS bank1
 ~>
 [(1,25),(2,25),(3,100)]
-
 -}
-
-{-
 transactionsS = do
   transferS 50 1 2
   transferS 25 1 3
   transferS 25 2 3
--}
 
 {-
 Aufgabe 7.* - reverse
