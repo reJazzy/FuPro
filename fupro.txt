@@ -1,0 +1,24 @@
+splitYourAssCheeks :: [a] -> ([a], [a])
+splitYourAssCheeks xs = f True xs
+  where
+    f _ [] = ([], [])
+    f True (x:xs) = let (as, bs) = f False xs in (x:as, bs)
+    f False (x:xs) = let (as, bs) = f True xs in (as, x:bs)
+
+
+tryZipWith :: (a -> b -> c) -> [a] -> [b] -> Either String [c]
+tryZipWith f [] [] = Right []
+tryZipWith f as [] = Left "Rechte Liste zu kurz"
+tryZipWith f [] bs = Left "Linke Liste zu kurz"
+tryZipWith f (a:as) (b:bs) = Right (zipWith f as bs)
+
+
+foldExp :: (a -> b) -> (Bool -> b) -> (b -> b) -> (b -> b -> b) -> (b -> b -> b) -> Exp a -> b
+foldExp var value not and or (VAR a) = var a
+foldExp var value not and or (VALUE a) = value a
+foldExp var value not and or (NOT a) = not (foldExp var value not and or a)
+foldExp var value not and or (AND a b) = and (foldExp var value not and or a) (foldExp var value not and or b)
+foldExp var value not and or (OR a b) = or (foldExp var value not and or a) (foldExp var value not and or b)
+
+
+eval :: (a -> Bool) -> Exp a -> Bool
