@@ -198,10 +198,11 @@ foo as bs p = do
   guard (a' < a)
   return (a', b)
 
---fooB :: Ord a => [a] -> [b] -> (a -> b -> Bool) -> [(a,b)]
+fooB :: Ord a => [a] -> [b] -> (a -> b -> Bool) -> [(a,b)]
+fooB as bs p = as >>= \a -> bs >>= \b -> guard(p a b) >>= \x -> as >>= \a' -> guard(a' < a) >>= \x' -> return (a', b)
 
-
---fooL :: Ord a => [a] -> [b] -> (a -> b -> Bool) -> [(a,b)]
+fooL :: Ord a => [a] -> [b] -> (a -> b -> Bool) -> [(a,b)]
+fooL as bs p = [(a, b) | a <- as, b <- bs, p a b, a' <- as, a' < a]
 
 
 {-
@@ -253,8 +254,8 @@ clear :: State Stack Stack,
 die den gesamten Stack zurückgibt und den leeren Stack als neuen Zustand setzt.
 -}
 
---clear :: State Stack Stack
-
+clear :: State Stack Stack
+clear = State(\s -> (s, []))
 
 {-
 c)
@@ -268,7 +269,11 @@ Nutzen Sie zur Definition die do-Notation auf sinnvolle Weise.
 Der State-Konstruktor darf nicht verwendet werden.
 -}
 
---pushNagger :: [Int] -> State Stack ()
+pushN :: [Int] -> State Stack ()
+pushN [] = return () 
+pushN (x : xs) = do 
+  pushN xs 
+  push x
 
 
 {-
@@ -283,4 +288,11 @@ Nutzen Sie zur Definition die do-Notation auf sinnvolle Weise.
 Der State-Konstruktor darf nicht verwendet werden.
 -}
 
---popNogger :: Nat -> State Stack [Int]
+popN :: Nat -> State Stack [Int]
+popN Z = return []
+popN (S nat) = do
+  x <- pop
+  xs <- popN nat
+  case x of 
+    Nothing -> return []
+    Just x -> return (x : xs)

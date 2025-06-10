@@ -22,3 +22,18 @@ foldExp var value not and or (OR a b) = or (foldExp var value not and or a) (fol
 
 
 eval :: (a -> Bool) -> Exp a -> Bool
+
+
+fooB :: Ord a => [a] -> [b] -> (a -> b -> Bool) -> [(a,b)]
+fooB as bs p = as >>= \a -> bs >>= \b -> guard(p a b) >>= \x -> as >>= a' -> guard(a' < a) >>= \x' -> \_ -> (a', b) 
+
+fooL :: Ord a => [a] -> [b] -> (a -> b -> Bool) -> [(a,b)]
+fooL as bs p = [(a, b) | a <- as, b <- bs, p a b, a' <- as, a' < a]
+
+
+clear :: State Stack Stack
+clear = State(\s -> (s, []))
+
+pushNagger :: [Int] -> State Stack ()
+pushNagger xs = do
+  x <- xs
