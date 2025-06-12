@@ -32,9 +32,9 @@ nach dem übergebenen Prädikat filtert.
 Nutzen Sie zur Implementierung die (>>=)-Notation.
 -}
 
---mapFi :: (a -> b) -> (b -> Bool) -> [a] -> [b]
-
-
+mapFi :: (a -> b) -> (b -> Bool) -> [a] -> [b]
+mapFi fm ff as = 
+  as >>= \a -> guard(ff(fm a)) >> [fm a]
 
 {-
 b)
@@ -44,9 +44,11 @@ Nennen Sie die Funktion
 mapFiDo :: (a -> b) -> (b -> Bool) -> [a] -> [b].
 -}
 
---mapFiDo :: (a -> b) -> (b -> Bool) -> [a] -> [b]
-
-
+mapFiDo :: (a -> b) -> (b -> Bool) -> [a] -> [b]
+mapFiDo fm ff as = do
+  a <- as
+  guard(ff(fm a))
+  return (fm a)
 
 {-
 c)
@@ -69,9 +71,17 @@ mit demselben Index in der zweiten Liste angewendet werden und das Ergebnis
 in der Either-Monade, statt der Maybe-Monade zurückgegeben werden.
 -}
 
---zipApp :: [a -> Maybe b] -> [a] -> Either String [b]
+fs1 = [(\x -> Just (x + 1)), (\x -> Just (x * 2)), (\x -> Just (x - 3))]
+as1 = [3, 5, 10]
 
-
+zipApp :: [a -> Maybe b] -> [a] -> Either String [b]
+zipApp [] [] = Right []
+zipApp fs [] = Left "Rechte Liste zu kurz"
+zipApp [] as = Left "Linke Liste zu kurz"
+zipApp (f : fs) (a : as) = do
+  b <- maybe (Left "Nothing bei Funktionsanwendung.") Right (f a)
+  bs <- zipApp fs as
+  return (b : bs) 
 
 {-
 Aufgabe 7.2 - Eine funktionale Bank
@@ -319,19 +329,30 @@ von putAccountS und getAccountS definiert werden.
 Nutzen Sie zur Implementierung der komponierten Funktionen die do-Notation.
 -}
 
---putAccountS :: ID -> Account -> State Bank ()
+putAccountS :: ID -> Account -> State Bank ()
+putAccountS id acc = State(\s -> ((), updRel s id acc))
+
+getAccountS :: ID -> State Bank (Maybe Account)
+getAccountS id = State(\s -> (lookup id s, s))
 
 
---getAccountS :: ID -> State Bank (Maybe Account)
+creditS :: Int -> ID -> State Bank ()
+creditS val id = do
+  acc <- getAccountS id
+  case acc of
+    Nothing -> return ()
+    Just acc -> putAccountS id acc{balance = balance acc + val}
 
 
---creditS :: Int -> ID -> State Bank ()
+debitS :: Int -> ID -> State Bank ()
+debitS val id = creditS(-val) id
 
+-- transfer amount id1 id2 bank = let b = credit amount id2 bank in debit amount id1 b
 
---debitS :: Int -> ID -> State Bank ()
-
-
---transferS :: Int -> ID -> ID -> State Bank ()
+transferS :: Int -> ID -> ID -> State Bank ()
+transferS val id1 id2 = do
+  creditS val id2
+  debitS val id1
 
 
 

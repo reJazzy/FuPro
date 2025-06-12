@@ -88,7 +88,22 @@ a)
 Machen Sie Baum zu einer Instanz der Typklassen Functor, Applicative und Monad.
 -}
 
+instance Functor Baum where
+    fmap :: (a -> b) -> Baum a -> Baum b
+    fmap f (Blatt a) = f a
+    fmap f (Knoten left right) = Knoten (fmap left) (fmap right)
 
+instance Applicative Baum where
+    pure :: a -> Baum a
+    pure a = Blatt a
+    (<*>) :: Baum (a -> b) -> Baum a -> Baum b
+    (<*>) (Blatt fa) baum = fmap fa baum
+    (<*>) (Knoten left right) baum = (left <*> baum) (right <*> baum)
+
+instance Monad Baum where
+    (>>=) :: Baum a -> (a -> Baum b) -> Baum b
+    (>>=) (Blatt a) f = f a
+    (>>=) (Knoten left right) f = Knoten (left >>= f) (rigth >>= f)
 
 {-
 b)
@@ -101,8 +116,9 @@ Datentyp zu implementieren, dann ist immer das Schema von Übungsblatt 5
 gemeint, sofern explizit nichts anderes in der Aufgabenstellung steht.
 -}
 
---foldBaum :: (a -> b) -> (b -> b -> b) -> Baum a -> b
-
+foldBaum :: (a -> b) -> (b -> b -> b) -> Baum a -> b
+foldBaum f g (Blatt a) = f a
+foldBaum f g (Knoten dieLinke afD) = g (foldBaum f g dieLinke) (foldBaum f g afD)
 
 {-
 Aufgabe 6.3 - Maybe
@@ -123,9 +139,12 @@ foo [] ~> Just []
 Nutzen Sie zur Implementierung die do-Notation auf sinnvolle Weise.
 -}
 
---foo :: [Maybe a] -> Maybe [a]
-
-
+foo :: [Maybe a] -> Maybe [a]
+foo [] = Just []
+foo (ma : mas) = do
+    a <- ma
+    as <- foo mas
+    return (a : as)
 {-
 Aufgabe 6.* - Kartesisches Produkt
 -}
