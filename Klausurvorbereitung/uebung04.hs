@@ -37,7 +37,13 @@ bag "Hello World!"
 [('H',1),('e',1),('l',3),('o',2),(' ',1),('W',1),('r',1),('d',1),('!',1)]
 -}
 
---bag :: Eq a => [a] -> [(a, Int)]
+bag :: Eq a => [a] -> [(a, Int)]
+bag xs = foldl fkt [] xs
+    where
+        fkt [] x = [(x, 1)]
+        fkt ((a, b) : acc) x
+            | a == x = (a, b + 1) : acc
+            | a /= x = (a, b) : fkt acc x
 
 
 
@@ -49,8 +55,14 @@ die zwei Listen lexikographisch ordnet
 (https://de.wikipedia.org/wiki/Lexikographische_Ordnung).
 -}
 
---lexOrd :: Ord a => [a] -> [a] -> Ordering
-
+lexOrd :: Ord a => [a] -> [a] -> Ordering
+lexOrd [] [] = EQ
+lexOrd [] bs = LT
+lexOrd as [] = GT
+lexOrd (a : as) (b : bs)
+    | a < b = LT
+    | a > b = GT
+    | a == b = lexOrd as bs
 
 
 {-
@@ -70,7 +82,17 @@ bagOrd [1,1,1,2,2,3,4,4,4,5] [1000,10] ~> GT
 bagOrd [1,1,1] [5,5,5,6,7,8] ~> EQ
 -}
 
---bagOrd :: Ord a => [a] -> [a] -> Ordering
+bagOrd :: Ord a => [a] -> [a] -> Ordering
+bagOrd as bs
+    | f (bag as) 0 < f (bag bs) 0 = LT
+    | f (bag as) 0 > f (bag bs) 0 = GT
+    | otherwise = EQ
+    where
+        f [] x = x
+        f ((a, b) : bags) x
+            | b > x = f bags b
+            | b < x = f bags x
+            | otherwise = f bags x
 
 
 
@@ -95,7 +117,12 @@ lexProd [1,1,1,1,2,3,4,4,4,5] [2,1,1,1,2,3,4,4,4,5] ~> GT
 -}
 
 -- 1. length 2. bagOrd 3. lexOrd
---lexProd :: Ord a => [a] -> [a] -> Ordering
+lexProd :: Ord a => [a] -> [a] -> Ordering
+lexProd as bs
+    | length as < length bs = LT
+    | length as > length bs = GT
+    | otherwise = if bagOrd as bs == EQ then lexOrd as bs else bagOrd as bs
+
 
 
 
@@ -124,8 +151,8 @@ der Einfachheit halber voraussetzen, dass die beiden Argumentlisten
 dieselbe Länge haben.
 -}
 
---skalarProdukt :: [Integer] -> [Integer] -> Integer
-
+skalarProdukt :: [Integer] -> [Integer] -> Integer
+skalarProdukt as bs = sum (zipWith (*) as bs)
 
 
 {-
@@ -146,8 +173,9 @@ transpose [[1,2,3], [4,5,6], [7,8,9]] ~> [[1,4,7],[2,5,8],[3,6,9]]
 transpose [[1,4,7],[2,5,8],[3,6,9]] ~> [[1,2,3],[4,5,6],[7,8,9]]
 -}
 
---transpose :: Matrix -> Matrix
-
+transpose :: Matrix -> Matrix
+transpose ([] : mtrx) = []
+transpose mtrx = map head mtrx : transpose (map tail mtrx) 
 
 
 {-
@@ -159,9 +187,17 @@ Sie dürfen der Einfachheit halber voraussetzen,
 dass die Dimensionen der Argumentmatrizen korrekt sind.
 -}
 
---matrixMult :: Matrix -> Matrix -> Matrix
+matrixMult :: Matrix -> Matrix -> Matrix
+matrixMult mtrx1 mtrx2
+  | null (head mtrx1) = []
+  | otherwise = f (map head mtrx1) mtrx2 : matrixMult (map tail mtrx1) mtrx2
+  where
+    f _ [] = []
+    f zeile (spalte : rest) = skalarProdukt zeile spalte : f zeile rest
 
-
+-- Beispiel: 2x2 Matrizen
+a = [[1,2], [3,4]]     -- 2 Spalten mit 2 Zeilen → 2x2
+b = [[5,6], [7,8]]     -- 2 Spalten mit 2 Zeilen → 2x2
 
 {-
 Aufgabe 4.* - Fibonacci mal ganz anders...

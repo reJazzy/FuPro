@@ -71,8 +71,9 @@ foldNat f g (S $ S Z) ~> g $ g f
 
 -}
 
---foldNat :: b -> (b -> b) -> Nat -> b
-
+foldNat :: b -> (b -> b) -> Nat -> b
+foldNat f g Z = f
+foldNat f g (S x) = g (foldNat f g x)
 
 {-
 b)
@@ -82,8 +83,8 @@ die zwei natürliche Zahlen addiert.
 Nutzen Sie hierfür die Faltung foldNat auf sinnvolle und nicht triviale Weise.
 -}
 
---add :: Nat -> Nat -> Nat
-
+add :: Nat -> Nat -> Nat
+add nat1 nat2 = foldNat nat2 S nat1
 
 {-
 c)
@@ -94,7 +95,12 @@ die eine natürliche Zahl in die Binärzahldarstellung aus Übung 3
 Nutzen Sie hierfür die Faltung foldNat auf sinnvolle und nicht triviale Weise.
 -}
 
---nat2binär :: Nat -> [Bool]
+nat2binär :: Nat -> [Bool]
+nat2binär nat = foldNat [False] count nat
+  where
+    count [] = [True]
+    count (False : bin) = True : bin
+    count (True : bin) = False : count bin
 
 
 
@@ -113,8 +119,11 @@ Anmerkung: predNat darf hier gerne mittels Pattern Matching definiert werden.
            Außer Sie wollen die *-Aufgabe vorziehen.
 -}
 
---predNat :: Nat -> Maybe Nat
-
+predNat :: Nat -> Maybe Nat
+predNat nat = foldNat Nothing g nat
+  where
+    g Nothing = Just Z
+    g (Just nat) = Just (S nat)
 
 
 {-
@@ -130,8 +139,12 @@ Guards oder ähnliches sind nicht notwendig, der "Fehlerfall" kann durch
 foldNat korrekt gehandhabt werden.
 -}
 
---minus :: Nat -> Nat -> Maybe Nat
-
+minus :: Nat -> Nat -> Maybe Nat
+minus nat1 nat2 = foldNat (Just nat1) g nat2
+  where
+    g Nothing = Nothing
+    g (Just Z) = Nothing
+    g (Just (S nat1)) = Just nat1
 
 {-
 c)
