@@ -161,7 +161,11 @@ Sollte der Index negativ sein, so soll der String
 "Fehler: Negativer Index" im Either zurückgegeben werden.
 -}
 
---elemAtIndex :: Int -> [a] -> Either String a
+elemAtIndex :: Int -> [a] -> Either String a
+elemAtIndex idx as 
+  | idx < 0 = Left "Fehler: Negativer Index"
+  | idx > length as = Left "Fehler: Index zu gross"
+  | otherwise = Right (as !! idx)
 
 
 {-
@@ -199,8 +203,9 @@ Beispielaufruf:
 convert beispielBinBaum ~> beispielBaum (siehe Definitionen oben)
 -}
 
---convert :: BinBaum a -> Baum a
-
+convert :: BinBaum a -> Baum a
+convert (BinBlatt a) = Knoten a []
+convert (BinKnoten a aBaum bBaum) = Knoten a [convert aBaum, convert bBaum] 
 
 {-
 b)
@@ -217,8 +222,10 @@ preFold f g (BinKnoten x (BinBlatt l) (BinBlatt r)) ~> g x (f l) (f r)
 ...
 -}
 
---preFold :: (a -> b) -> (a -> b -> b -> b) -> BinBaum a -> b
-
+-- Rekursion nicht vergessen!!!
+preFold :: (a -> b) -> (a -> b -> b -> b) -> BinBaum a -> b
+preFold f g (BinBlatt a) = f a
+preFold f g (BinKnoten a aBaum bBaum) = g a (preFold f g aBaum) (preFold f g bBaum)
 
 
 {-
@@ -234,8 +241,14 @@ preorder beispielBinBaum ~>
 [4,2,1,3,6,5,7,8,9]
 -}
 
---preorder :: BinBaum a -> [a]
-
+-- du musst keine eigene rekrsion machen, die rekursion macht preFold für dich
+preorder :: BinBaum a -> [a]
+preorder binBaum = preFold f g binBaum
+  where
+    f :: a -> [a]
+    f a = [a]
+    g :: a -> [a] -> [a] -> [a]
+    g a aBaum bBaum = a : aBaum ++ bBaum
 
 {-
 d)
@@ -249,8 +262,13 @@ knotenSumme beispielBinBaum ~>
 45
 -}
 
---knotenSumme :: Num a => BinBaum a -> a
-
+knotenSumme :: Num a => BinBaum a -> a
+knotenSumme binBaum = preFold f g binBaum
+  where
+    f :: a -> a
+    f a = a
+    g :: Num a => a -> a -> a -> a
+    g a aBaum bBaum = a + aBaum + bBaum
 
 
 
