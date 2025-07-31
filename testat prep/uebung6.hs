@@ -90,20 +90,20 @@ Machen Sie Baum zu einer Instanz der Typklassen Functor, Applicative und Monad.
 
 instance Functor Baum where
     fmap :: (a -> b) -> Baum a -> Baum b
-    fmap f (Blatt a) = f a
-    fmap f (Knoten left right) = Knoten (fmap left) (fmap right)
+    fmap f (Blatt a) = Blatt (f a)
+    fmap f (Knoten left right) = Knoten (fmap f left) (fmap f right)
 
 instance Applicative Baum where
     pure :: a -> Baum a
     pure a = Blatt a
     (<*>) :: Baum (a -> b) -> Baum a -> Baum b
     (<*>) (Blatt fa) baum = fmap fa baum
-    (<*>) (Knoten left right) baum = (left <*> baum) (right <*> baum)
+    (<*>) (Knoten left right) baum = Knoten (left <*> baum) (right <*> baum)
 
 instance Monad Baum where
     (>>=) :: Baum a -> (a -> Baum b) -> Baum b
     (>>=) (Blatt a) f = f a
-    (>>=) (Knoten left right) f = Knoten (left >>= f) (rigth >>= f)
+    (>>=) (Knoten left right) f = Knoten (left >>= f) (right >>= f)
 
 {-
 b)
