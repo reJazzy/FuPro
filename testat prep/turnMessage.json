@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "type": "object",
+  "@class": "edu.udo.cs.sopra.ntf.TurnMessage",
+  "title": "Nova Luna Turn Message",
+  "required": [
+    "tileID",
+    "x",
+    "y",
+    "refillTrack"
+  ],
+  "properties": {
+    "tileID": {
+      "type": "integer"
+    },
+    "x": {
+      "type": "integer"
+    },
+    "y": {
+      "type": "integer"
+    },
+    "refillTrack": {
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false
+}
+
