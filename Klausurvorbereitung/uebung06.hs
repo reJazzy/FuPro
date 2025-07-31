@@ -32,11 +32,16 @@ Do- und Bind-Notation.
 Nennen Sie die Funktionen mapLK, mapDo und mapBind.
 -}
 
---mapLK :: (a -> b) -> [a] -> [b]
+mapLK :: (a -> b) -> [a] -> [b]
+mapLK f as = [f a | a <- as]
 
---mapDo :: (a -> b) -> [a] -> [b]
+mapDo :: (a -> b) -> [a] -> [b]
+mapDo f as = do
+    a <- as
+    [f a]
 
---mapBind :: (a -> b) -> [a] -> [b]
+mapBind :: (a -> b) -> [a] -> [b]
+mapBind f as = as >>= \a -> [f a]
 
 {-
 b)
@@ -49,10 +54,23 @@ Nennen Sie die Listen pyTriplesDo und pyTriplesBind.
 pyTriples :: [(Int, Int, Int)]
 pyTriples = [(a,b,c) |c <- [0..], b <- [0.. c], a <- [0.. b], (a < b) && (b < c), (a^2 + b^2) == c^2]
 
---pyTriplesDo :: [(Int, Int, Int)]
+pyTriplesDo :: [(Int, Int, Int)]
+pyTriplesDo = do
+    c <- [0..]
+    b <- [0..c]
+    a <- [0..b]
+    guard ((a < b) && (b < c))
+    guard ((a^2 + b^2) == c^2)
+    [(a, b, c)]
 
---pyTriplesBind :: [(Int, Int, Int)]
-
+pyTriplesBind :: [(Int, Int, Int)]
+pyTriplesBind = 
+    [0..] >>= \c ->
+    [0..c] >>= \b ->
+    [0..b] >>= \a ->
+    guard((a < b) && (b < c)) >>
+    guard ((a^2 + b^2) == c^2) >>
+    [(a, b, c)]
 
 {-
 Aufgabe 6.2 - Monadeninstanzen
@@ -69,7 +87,22 @@ a)
 Machen Sie Baum zu einer Instanz der Typklassen Functor, Applicative und Monad.
 -}
 
+instance Functor Baum where
+    fmap :: (a -> b) -> Baum a -> Baum b
+    fmap f (Blatt a) = Blatt (f a)
+    fmap f (Knoten l r) = Knoten (fmap f l) (fmap f r)
 
+instance Applicative Baum where
+    pure :: a -> Baum a
+    pure a = Blatt a
+    (<*>) :: Baum (a -> b) -> Baum a -> Baum b
+    (<*>) (Blatt f) baum = fmap f baum
+    (<*>) (Knoten fl fr) baum = Knoten (fl <*> baum) (fr <*> baum)
+
+instance Monad Baum where
+    (>>=) :: Baum a -> (a -> Baum b) -> Baum b
+    (>>=) (Blatt a) f = f a
+    (>>=) (Knoten l r) f = Knoten (l >>= f) (r >>= f)
 
 {-
 b)
@@ -82,8 +115,9 @@ Datentyp zu implementieren, dann ist immer das Schema von Übungsblatt 5
 gemeint, sofern explizit nichts anderes in der Aufgabenstellung steht.
 -}
 
---foldBaum :: (a -> b) -> (b -> b -> b) -> Baum a -> b
-
+foldBaum :: (a -> b) -> (b -> b -> b) -> Baum a -> b
+foldBaum f g (Blatt a) = f a
+foldBaum f g (Knoten l r) = g (foldBaum f g l) (foldBaum f g r)
 
 {-
 Aufgabe 6.3 - Maybe
@@ -104,7 +138,15 @@ foo [] ~> Just []
 Nutzen Sie zur Implementierung die do-Notation auf sinnvolle Weise.
 -}
 
---foo :: [Maybe a] -> Maybe [a]
+-- Der Trick hier ist die Rekursion: wir entpacken alle elemente in der liste aus der maybe monade erst, bevor wir irgendwas machen
+-- a <- ma nimmt aktuellen wert aus maybe, as <- foo mas, foo mas ist funktionsaufruf, der wieder a <- ma macht, solange bis rekursionsabbruch stattfindet
+-- sobald 
+foo :: [Maybe a] -> Maybe [a]
+foo [] = Just []
+foo (ma : mas) = do
+    a <- ma
+    as <- foo mas
+    return (a : as)
 
 
 {-
@@ -135,4 +177,26 @@ cartesianProduct [[1,2], [3,4], [5,6], [7]] ~>
 [[1,3,5,7],[1,3,6,7],[1,4,5,7],[1,4,6,7],[2,3,5,7],[2,3,6,7],[2,4,5,7],[2,4,6,7]]
 -}
 
---cartesianProduct :: [[a]] -> [[a]]
+cartesianProduct :: [[a]] -> [[a]]
+cartesianProduct [] = [[]]
+cartesianProduct (xs : xss) = [ x : rest | x <- xs, rest <- cartesianProduct xss]
+
+{-
+Beispielablauf:
+
+cartesianProduct [[1,2], [3,4], [5,6]]
+
+[ x : rest | x <- [1,2], rest <- cartesianProduct [[3,4], [5,6]] ]
+
+[ x : rest | x <- [3,4], rest <- cartesianProduct [[5,6]] ]
+
+[ [5], [6] ]
+
+[ [3,5], [3,6], [4,5], [4,6] ]
+
+[1 : [3,5], 1 : [3,6], 1 : [4,5], 1 : [4,6],
+ 2 : [3,5], 2 : [3,6], 2 : [4,5], 2 : [4,6]]
+
+[[1,3,5],[1,3,6],[1,4,5],[1,4,6],[2,3,5],[2,3,6],[2,4,5],[2,4,6]]
+
+-}

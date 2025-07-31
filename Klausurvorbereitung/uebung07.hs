@@ -6,6 +6,7 @@ in der Übung, im Midterm-Test und der Klausur vorausgesetzt werden,
 sofern die konkrete Aufgabenstellung dies nicht ausschließt.
 -}
 import Control.Monad ( guard )
+import System.Win32 (COORD(xPos))
 
 {-
 Übung zur Vorlesung
@@ -32,8 +33,8 @@ nach dem übergebenen Prädikat filtert.
 Nutzen Sie zur Implementierung die (>>=)-Notation.
 -}
 
---mapFi :: (a -> b) -> (b -> Bool) -> [a] -> [b]
-
+mapFi :: (a -> b) -> (b -> Bool) -> [a] -> [b]
+mapFi f p xs = xs >>= \x -> guard(p (f x)) >> [f x]
 
 
 {-
@@ -44,9 +45,11 @@ Nennen Sie die Funktion
 mapFiDo :: (a -> b) -> (b -> Bool) -> [a] -> [b].
 -}
 
---mapFiDo :: (a -> b) -> (b -> Bool) -> [a] -> [b]
-
-
+mapFiDo :: (a -> b) -> (b -> Bool) -> [a] -> [b]
+mapFiDo f p xs = do
+  x <- xs
+  guard(p (f x))
+  [f x]
 
 {-
 c)
@@ -69,8 +72,16 @@ mit demselben Index in der zweiten Liste angewendet werden und das Ergebnis
 in der Either-Monade, statt der Maybe-Monade zurückgegeben werden.
 -}
 
---zipApp :: [a -> Maybe b] -> [a] -> Either String [b]
-
+unzipMyPants :: [a -> Maybe b] -> [a] -> Either String [b]
+unzipMyPants [] [] = Right []
+unzipMyPants fas [] = Left "Rechte Liste ist zu kurz."
+unzipMyPants [] as = Left "Linke Liste ist zu kurz."
+unzipMyPants (f : fas) (a : as) =
+  case f a of
+    Nothing -> Left "Nothing bei Funktionsanwendung."
+    Just b -> case unzipMyPants fas as of
+      Left x -> Left x
+      Right x -> Right (b : x)
 
 
 {-
