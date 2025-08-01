@@ -72,6 +72,7 @@ mit demselben Index in der zweiten Liste angewendet werden und das Ergebnis
 in der Either-Monade, statt der Maybe-Monade zurückgegeben werden.
 -}
 
+-- Immer wenn man mit verschachtelten Monaden arbeitet, lohnt sich eventuell case of zu benutzen, vor allem bei Eihter/Maybe - NICHT VERGESSEN!
 unzipMyPants :: [a -> Maybe b] -> [a] -> Either String [b]
 unzipMyPants [] [] = Right []
 unzipMyPants fas [] = Left "Rechte Liste ist zu kurz."
@@ -134,7 +135,8 @@ getAccount :: ID -> Bank -> Maybe Account
 getAccount id bank = lookup id bank
 
 credit :: Int -> ID -> Bank -> Bank
-credit n i b = putAccount i b entry{ balance = oldBalance + n } where
+credit n i b = putAccount i b entry{ balance = oldBalance + n } 
+  where
   Just entry = getAccount i b
   oldBalance = balance entry
 
@@ -193,19 +195,37 @@ transferR :: Int -> ID -> Environment -> Bank
 Verwenden Sie die do-Notation zur Definition der Funktionen.
 -}
 
---putAccountR :: Account -> (->) Environment Bank 
+putAccountR :: Account -> (->) Environment Bank 
+putAccountR acc = do
+  id <- idB
+  bank <- bank
+  return (putAccount id bank acc)
+
+getAccountR :: (->) Environment (Maybe Account)
+getAccountR = do
+  id <- idB
+  bank <- bank
+  return (getAccount id bank)
+
+creditR  :: Int -> (->) Environment Bank
+creditR debt = do
+  acc <- getAccountR
+  case acc of
+    Just acc -> putAccountR acc{balance = balance acc + debt}
+    Nothing -> bank
 
 
---getAccountR :: (->) Environment (Maybe Account)
+debitR :: Int -> (->) Environment Bank
+debitR debt = creditR (-debt)
 
-
---creditR  :: Int -> (->) Environment Bank
-
-
---debitR :: Int -> (->) Environment Bank
-
-
---transferR :: Int -> ID -> (->) Environment Bank
+-- transfer amount id1 id2 bank = let b = credit amount id2 bank in debit amount id1 b
+transferR :: Int -> ID -> (->) Environment Bank
+transferR money id = do
+  -- wir heben die bank aus dem credit
+  b <- creditR money
+  -- wir erstellen dann ein "neues" env, da wir ja uns nicht mehr im env befinden
+  let env' = Env{idB = id, bank = b}
+  return (debitR money env') 
 
 
 
@@ -250,7 +270,13 @@ aus FuPro_2025_VL7.pdf zu implementieren.
 (Für logging darf der Tupelkonstruktor (,) benutzt werden.)
 -}
 
---transferLog :: Int -> ID -> ID -> Bank -> (,) String Bank
+logging :: String -> (String, ())
+logging s = (s, ())
+
+transferLog :: Int -> ID -> ID -> Bank -> (,) String Bank
+transferLog amount id1 id2 bank = do
+  logging ("Der Betrag " ++ show amount ++ " wurde von Konto " ++ show id1 ++ " auf Konto " ++ show id2 ++ " uebertragen.\n")
+  return (transfer amount id1 id2 bank)
 
 
 
@@ -330,21 +356,28 @@ von putAccountS und getAccountS definiert werden.
 Nutzen Sie zur Implementierung der komponierten Funktionen die do-Notation.
 -}
 
---putAccountS :: ID -> Account -> State Bank ()
+putAccountS :: ID -> Account -> State Bank ()
+putAccountS id acc = State(\s -> ((), putAccount id s acc))
 
+getAccountS :: ID -> State Bank (Maybe Account)
+getAccountS id = State (\s -> (getAccount id s, s))
 
---getAccountS :: ID -> State Bank (Maybe Account)
+-- Einfach merken: wenn wir ein State Bank () haben und <- benutzen, dann kriegen wir den Wert, der Zustand wird automatisch weitergegeben intern
+creditS :: Int -> ID -> State Bank ()
+creditS amount id = do
+  acc <- getAccountS id
+  case acc of
+    Just acc -> putAccountS id acc{balance = balance acc + amount}
+    Nothing -> return ()
 
+debitS :: Int -> ID -> State Bank ()
+debitS amount id = creditS (-amount) id
 
---creditS :: Int -> ID -> State Bank ()
-
-
---debitS :: Int -> ID -> State Bank ()
-
-
---transferS :: Int -> ID -> ID -> State Bank ()
-
-
+-- transfer amount id1 id2 bank = let b = credit amount id2 bank in debit amount id1 b
+transferS :: Int -> ID -> ID -> State Bank ()
+transferS amount id1 id2 = do
+  creditS amount id2
+  debitS amount id1
 
 {-
 Folgender Beispielaufruf kann zum Verständnis der Aufgabe und Überprüfen ihrer
