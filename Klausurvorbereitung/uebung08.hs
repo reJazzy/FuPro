@@ -21,7 +21,12 @@ der Eingabeliste enthält und die zweite Projektion alle Elemente mit einer unge
 Position.
 -}
 
---splitParity :: [a] -> ([a],[a])
+splitParity :: [a] -> ([a],[a])
+splitParity as = f True as
+  where
+    f _ [] = ([], [])
+    f True (a : as) = let (as, bs) = f False as in (a : as, bs)
+    f False (a : as) = let (as, bs) = f True as in (as, a : bs)
 
 
 {-
@@ -37,8 +42,13 @@ werden.
 Hinweis: Sie müssen unendliche Listen nicht betrachten.
 -}
 
---tryZipWith :: (a -> b -> c) -> [a] -> [b] -> Either String [c]
-
+tryZipWith :: (a -> b -> c) -> [a] -> [b] -> Either String [c]
+tryZipWith z [] [] = Right []
+tryZipWith z as [] = Left "Rechts ist zu kurz."
+tryZipWith z [] bs = Left "Links ist zu kurz."
+tryZipWith z (a:as) (b:bs) = do
+  rest <- tryZipWith z as bs
+  return (z a b : rest)
 
 {-
 Aufgabe 8.2 - Datentypen, Faltungen und Typklassen
@@ -65,8 +75,12 @@ foldExp :: (a -> b) -> (Bool -> b) -> (b -> b) -> (b -> b -> b) -> (b -> b -> b)
 für den Datentyp Exp.
 -}
 
---foldExp :: (a -> b) -> (Bool -> b) -> (b -> b) -> (b -> b -> b) -> (b -> b -> b) -> Exp a -> b 
-
+foldExp :: (a -> b) -> (Bool -> b) -> (b -> b) -> (b -> b -> b) -> (b -> b -> b) -> Exp a -> b 
+foldExp var value not and or (VAR a) = var a
+foldExp var value not and or (VALUE a) = value a
+foldExp var value not and or (NOT a) = not (foldExp var value not and or a)
+foldExp var value not and or (AND a b) = (foldExp var value not and or a) `and` (foldExp var value not and or b)
+foldExp var value not and or (OR a b) = (foldExp var value not and or a) `or` (foldExp var value not and or b)
 
 {-
 b)
@@ -89,8 +103,8 @@ eval (\v -> case v of 'x' -> False; 'y' -> False) bspExp
 True
 -}
 
---eval :: (a -> Bool) -> Exp a -> Bool
-
+eval :: (a -> Bool) -> Exp a -> Bool
+eval f e = foldExp f id not (&&) (||) e
 
 {-
 c)
@@ -109,8 +123,14 @@ elimOr bspExp
 AND (VALUE True) (NOT (NOT (AND (NOT (VAR 'x')) (NOT (VAR 'y')))))
 -}
 
---elimOr :: Exp a -> Exp a 
-
+elimOr :: Exp a -> Exp a 
+elimOr e = foldExp var value not and f e
+  where
+    var a = VAR a
+    value a = VALUE a
+    not a = NOT a
+    and a b = AND a b
+    f a b = NOT (AND (NOT a) (NOT b))
 
 {-
 d)
@@ -120,11 +140,25 @@ Tipp: foldExp kann Ihnen hier im Vergleich zum Pattern Matching sehr viel Schrei
 ersparen.
 -}
 
+-- ggf. nochmal anschauen, hab das im Midterm verkackt
+instance Functor Exp where
+  fmap :: (a -> b) -> Exp a -> Exp b
+  fmap f a = foldExp (\a -> VAR (f a)) VALUE NOT AND OR a
 
+instance Applicative Exp where
+  pure :: a -> Exp a
+  pure a = VAR a
 
+  (<*>) :: Exp (a -> b) -> Exp a -> Exp b
+  (<*>) (VAR f) a = fmap f a
+  (<*>) (VALUE f) _ = VALUE f
+  (<*>) (NOT f) a = NOT (f <*> a)
+  (<*>) (AND fa fb) a = AND (fa <*> a) (fb <*> a)
+  (<*>) (OR fa fb) a = OR (fa <*> a) (fb <*> a)
 
- 
-
+instance Monad Exp where
+  (>>=) :: Exp a -> (a -> Exp b) -> Exp b
+  (>>=) a f = foldExp (\var -> f var) VALUE NOT AND OR a
 {-
 Aufgabe 8.3 - Monaden
 -}
@@ -146,11 +180,11 @@ foo as bs p = do
   guard (a' < a)
   return (a', b)
 
---fooB :: Ord a => [a] -> [b] -> (a -> b -> Bool) -> [(a,b)]
+fooB :: Ord a => [a] -> [b] -> (a -> b -> Bool) -> [(a,b)]
+fooB as bs p = as >>= \a -> bs >>= \b -> guard(p a b) >> as >>= \a' -> guard(a' < a) >> [(a', b)]
 
-
---fooL :: Ord a => [a] -> [b] -> (a -> b -> Bool) -> [(a,b)]
-
+fooL :: Ord a => [a] -> [b] -> (a -> b -> Bool) -> [(a,b)]
+fooL as bs p = [(a, b) | a <- as, b <- bs, p a b, a' <- as, a' < a]
 
 {-
 Gegeben seien die aus der Vorlesung bekannten Haskell-Datentypen Nat und State, sowie die
@@ -201,8 +235,8 @@ clear :: State Stack Stack,
 die den gesamten Stack zurückgibt und den leeren Stack als neuen Zustand setzt.
 -}
 
---clear :: State Stack Stack
-
+clear :: State Stack Stack
+clear = State (\s -> (s,[]))
 
 {-
 c)
@@ -216,8 +250,11 @@ Nutzen Sie zur Definition die do-Notation auf sinnvolle Weise.
 Der State-Konstruktor darf nicht verwendet werden.
 -}
 
---pushN :: [Int] -> State Stack ()
-
+pushN :: [Int] -> State Stack ()
+pushN [] = return ()
+pushN (x : xs) = do
+  rest <- pushN xs
+  push x
 
 {-
 d)
@@ -231,4 +268,11 @@ Nutzen Sie zur Definition die do-Notation auf sinnvolle Weise.
 Der State-Konstruktor darf nicht verwendet werden.
 -}
 
---popN :: Nat -> State Stack [Int]
+popN :: Nat -> State Stack [Int]
+popN Z = return []
+popN (S nat) = do
+  x <- pop
+  rest <- popN nat
+  case x of
+    Just x -> return (x : rest)
+    Nothing -> return []

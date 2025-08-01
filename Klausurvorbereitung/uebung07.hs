@@ -406,4 +406,12 @@ reverse' :: [a] -> [a],
 die eine gegebene Liste "umdreht" mittels einer Listenfaltung.
 -}
 
---reverse' :: [a] -> [a]
+reverse' :: [a] -> [a]
+reverse' as = foldl g [] as
+  where
+    g acc a = a : acc
+
+reverse'' :: [a] -> [a]
+reverse'' as = foldr g [] as
+  where
+    g a acc =  acc ++ [a]
